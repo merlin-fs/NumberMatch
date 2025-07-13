@@ -4,9 +4,10 @@ using Unity.Mathematics;
 
 namespace Game.Core.Components
 {
-    public struct GameFieldComponent : IEntityComponent
+    public struct FieldComponent : IEntityComponent
     {
         public int2 Size; // x=Width, y=Height
+        public bool IsValid;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int2 FromIndex(int index)

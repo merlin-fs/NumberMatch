@@ -1,20 +1,23 @@
+using System.Threading.Tasks;
+using TFs.Common.Contexts;
 using TFs.Common.Entities;
 using UnityEngine;
 
 namespace Game.Core.Worlds
 {
-    public class WorldHolder : MonoBehaviour
+    public class WorldHolder : MonoBehaviour, IInitializable
     {
         private World _world;
-        
-        void Start()
+
+        public Task Initialize(Context context)
         {
-            _world = new World("test");
+            _world = context.Resolve<World>();
+            return Task.CompletedTask;
         }
 
-        void Update()
+        private void Update()
         {
-
+            _world?.Update(Time.deltaTime);
         }
     }
 }

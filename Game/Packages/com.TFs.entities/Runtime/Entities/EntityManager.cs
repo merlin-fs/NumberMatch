@@ -65,6 +65,16 @@ namespace TFs.Common.Entities
             return newEntity;
         }
         
+        public void RemoveEntity(Entity entity)
+        {
+            var archetype = FindEntityArchetype(entity.ID);
+            if (archetype == null)
+            {
+                throw new InvalidOperationException($"Entity {entity} not found in any archetype.");
+            }
+            archetype.RemoveEntity(entity.ID);
+        }
+        
         // Додає компонент до групи сутностей
         public void AddComponent<T>(NativeArray<Entity> entities, T component) where T : unmanaged, IEntityComponent
         {
@@ -117,26 +127,26 @@ namespace TFs.Common.Entities
         }
 
         
-        public void AddBuffer<T>(int entityId) 
+        public void AddBuffer<T>(Entity entity) 
             where T : unmanaged, IEntityBufferComponent
         {
-            var archetype = FindEntityArchetype(entityId);
+            var archetype = FindEntityArchetype(entity.ID);
             if (archetype == null)
             {
-                throw new InvalidOperationException($"Entity {entityId} not found in any archetype.");
+                throw new InvalidOperationException($"Entity {entity.ID} not found in any archetype.");
             }
-            archetype.AddBuffer<T>(entityId);
+            archetype.AddBuffer<T>(entity.ID);
         }
 
-        public NativeList<T> GetBuffer<T>(int entityId) 
+        public NativeList<T> GetBuffer<T>(Entity entity) 
             where T : unmanaged, IEntityBufferComponent
         {
-            var archetype = FindEntityArchetype(entityId);
+            var archetype = FindEntityArchetype(entity.ID);
             if (archetype == null)
             {
-                throw new InvalidOperationException($"Entity {entityId} not found in any archetype.");
+                throw new InvalidOperationException($"Entity {entity.ID} not found in any archetype.");
             }
-            return archetype.GetBuffer<T>(entityId);
+            return archetype.GetBuffer<T>(entity.ID);
         }        
         
         // Отримує компонент для сутності

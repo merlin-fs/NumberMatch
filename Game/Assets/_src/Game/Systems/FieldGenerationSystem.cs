@@ -1,55 +1,97 @@
+using System.Collections.Generic;
+using System.Linq;
 using Game.Configs;
 using Game.Core.Components;
 using TFs.Common.Entities;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Game.Core.Systems
 {
     public class FieldGenerationSystem : ISystem
     {
-        private FieldGenerationConfig _config;
+        private readonly FieldGenerationConfig _config;
+        private readonly Entity _fieldEntity; // Сутність поля, створюється один раз
         
-        public FieldGenerationSystem(FieldGenerationConfig config)
+        public FieldGenerationSystem(FieldGenerationConfig config, Entity fieldEntity)
         {
             _config = config;
+            _fieldEntity = fieldEntity;
         }
         
         public void OnCreate(EntityManager manager, SystemQuery query)
         {
-            // Створюємо сутність поля
-            var fieldEntity = manager.CreateEntity(typeof(GameFieldComponent), typeof(CellComponent));
-            var field = new GameFieldComponent { Size = _config.Size };
-            manager.UpdateComponent(fieldEntity, field);
-            var cells = manager.GetBuffer<CellComponent>(fieldEntity.ID);
-
-            // Генеруємо стартові рядки
-            for (var y = 0; y < _config.StartRows; y++)
-            {
-                GenerateRow(field, cells, y);
-            }            
+            query.AddComponentType<AddNumbersRequestComponent>();
         }
 
-        private void GenerateRow(GameFieldComponent field, NativeList<CellComponent> cells, int row)
+        public void OnUpdate(EntityManager manager, NativeArray<Entity> entities, float deltaTime)
         {
-            var width = _config.Size.x;
-            var deckPos = _config.DeckPosition;
-            cells.Capacity = width * row;  
-
-            for (var x = 0; x < width; x++)
+            if (entities.Length == 0) return;
+            
+            var field = manager.GetComponent<FieldComponent>(_fieldEntity);
+            var cells = manager.GetBuffer<CellComponent>(_fieldEntity);
+            var deck = manager.GetBuffer<DeckComponent>(_fieldEntity);
+            var max = field.At(field.Size.x, field.Size.y);
+            
+            foreach (var entity in entities)
             {
-                if (deckPos >= _config.Deck.Length) break; // deck закінчився — handle як треба
-                var value = _config.Deck[deckPos++];
+                var request = manager.GetComponent<AddNumbersRequestComponent>(entity);
+                AddNumbers(deck, cells, request.NumbersCount, request.Index);
                 
-                cells.Add(new CellComponent
-                {
-                    Index = field.At(x, row),
-                    Value = value,
-                    IsRemoved = false
-                });
+                var lastIndex = request.Index + request.NumbersCount - 1;
+                var neededRows = (lastIndex / field.Size.x) + 1;
+                field.Size.y = math.max(field.Size.y, neededRows);
+                manager.UpdateComponent(_fieldEntity, field);
+                manager.RemoveEntity(entity);
             }
-            _config.DeckPosition = deckPos; // Зберігаємо нову позицію
         }
         
-        public void OnUpdate(EntityManager manager, NativeArray<Entity> entities, float deltaTime) {}
+        private void AddNumbers(NativeList<DeckComponent> desk, NativeList<CellComponent> cells, int numbersCount, int startIndex)
+        {
+            cells.Capacity += numbersCount; // Збільшуємо ємність буфера
+            
+            for (var i = 0; i < numbersCount; i++)
+            {
+                if (desk.Length == 0)
+                {
+                    var deck = BuildDeck(_config.PairCountPerType, _config.Seed).Reinterpret<DeckComponent>();
+                    desk.AddRange(deck);
+                    deck.Dispose();
+                }
+                
+                var value = desk[0].Value;
+                desk.RemoveAt(0);
+                cells.Add(new CellComponent
+                {
+                    Index = startIndex + i,
+                    Value = value,
+                    IsRemoved = false,
+                });
+            }
+        }
+        
+        private NativeArray<int> BuildDeck(int pairCountPerType, int seed)
+        {
+            // Будь-яка твоя deck-логіка (див. попередні приклади)
+            var pairs = new List<(int, int)>
+            {
+                (1, 9), (2, 8), (3, 7), (4, 6), (5, 5),
+                (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)
+            };
+
+            var deck = new List<int>();
+            for (var i = 0; i < pairCountPerType; i++)
+            {
+                foreach (var pair in pairs)
+                {
+                    deck.Add(pair.Item1);
+                    deck.Add(pair.Item2);
+                }
+            }
+
+            // Shuffle
+            var rng = new System.Random(seed);
+            return new NativeArray<int>(deck.OrderBy(x => rng.Next()).ToArray(), Allocator.Temp);
+        }        
     }
 }
