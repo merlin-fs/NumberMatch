@@ -41,6 +41,7 @@ namespace Game.Core
             
             _world.SystemManager.AddSystem(new Systems.FieldGenerationSystem(config, _field), _world.EntityManager);
             _world.SystemManager.AddSystem(new Systems.CellMergeSystem(_field, rules), _world.EntityManager);
+            _world.SystemManager.AddSystem(new Systems.ClearRowsSystem(_field), _world.EntityManager);
         }
         
         public void StartNewGame()
