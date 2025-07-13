@@ -4,3 +4,6 @@
 /Game/UserSettings/
 /Game/Temp/
 *.sln
+/Game/obj/
+/Game/Game.sln.DotSettings.user
+*.csproj
