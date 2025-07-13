@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Game.Configs;
 using Game.UI;
@@ -10,9 +11,10 @@ namespace Game.Core
     {
         public World World => _world;
         public Entity Field => _field;
+        public Action OnGameFieldUpdated;
         
-        private World _world;
-        private Entity _field;
+        private readonly World _world;
+        private readonly Entity _field;
         
         private GameFieldUiDebugView _gameFieldUiDebugView;
         
@@ -39,9 +41,14 @@ namespace Game.Core
             rules.Add(new DiagonalMergeRule());
             rules.Add(new WrapRowMergeRule());
             
-            _world.SystemManager.AddSystem(new Systems.FieldGenerationSystem(config, _field), _world.EntityManager);
-            _world.SystemManager.AddSystem(new Systems.CellMergeSystem(_field, rules), _world.EntityManager);
-            _world.SystemManager.AddSystem(new Systems.ClearRowsSystem(_field), _world.EntityManager);
+            _world.SystemManager.AddSystem(new Systems.FieldGenerationSystem(config, _field, OnFieldUpdated), _world.EntityManager);
+            _world.SystemManager.AddSystem(new Systems.CellMergeSystem(_field, rules, OnFieldUpdated), _world.EntityManager);
+            _world.SystemManager.AddSystem(new Systems.ClearRowsSystem(_field, OnFieldUpdated), _world.EntityManager);
+        }
+
+        private void OnFieldUpdated()
+        {
+            OnGameFieldUpdated?.Invoke();
         }
         
         public void StartNewGame()

@@ -23,33 +23,20 @@ namespace Game.UI
         {
             _gameManager = context.Resolve<GameManager>();
             _gameFieldUiDebugView = context.Resolve<GameFieldUiDebugView>();
-            _gameFieldUiDebugView.OnUpdate += OnUpdate;
             _world = context.Resolve<World>();
             return Task.CompletedTask;
         }
 
-        private void OnUpdate()
-        {
-            Invoke(nameof(RenderField), 0.5f); // Викликати через 2 секунди після ініціалізації
-        }
-        
         private void OnAddPack()
         {
             _gameManager.AddPack();
-            Invoke(nameof(RenderField), 0.5f); // Викликати через 2 секунди після ініціалізації
         }
 
         private void OnStartNewGame()
         {
             _gameManager.StartNewGame();
-            Invoke(nameof(RenderField), 0.5f); // Викликати через 2 секунди після ініціалізації
         }
 
-        private void RenderField()
-        {
-            _gameFieldUiDebugView.RenderField(_world.EntityManager);
-        }
-        
         private void OnEnable()
         {
             _disposables = new CompositeDisposable();

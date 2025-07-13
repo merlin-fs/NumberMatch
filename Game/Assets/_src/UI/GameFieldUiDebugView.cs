@@ -22,16 +22,16 @@ namespace Game.UI
         private int idx1 = -1;
         private int idx2 = -1;
         private Action _onDeselect;
-        public Action OnUpdate;
 
         public Task Initialize(Context context)
         {
             _gameManager = context.Resolve<GameManager>();
+            _gameManager.OnGameFieldUpdated += () => RenderField(_gameManager.World.EntityManager);
             return Task.CompletedTask;
         }
         
         // Виклич вручну або через систему, наприклад після змін у полі
-        public void RenderField(EntityManager manager)
+        private void RenderField(EntityManager manager)
         {
             _onDeselect?.Invoke();
             _onDeselect = null;
@@ -99,7 +99,6 @@ namespace Game.UI
                             idx1 = -1;
                             idx2 = -1;
                         };
-                        OnUpdate?.Invoke();
                     }
                 });
             }

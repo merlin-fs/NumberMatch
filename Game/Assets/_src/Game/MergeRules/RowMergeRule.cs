@@ -13,8 +13,8 @@ namespace Game.Core
             if (a.IsRemoved || b.IsRemoved) return false;
             if (!(a.Value == b.Value || a.Value + b.Value == 10)) return false;
 
-            var posA = field.FromIndex(a.Index);
-            var posB = field.FromIndex(b.Index);
+            var posA = field.FromIndex(idxA);
+            var posB = field.FromIndex(idxB);
 
             // Перевіряємо, чи в одному рядку
             if (posA.y != posB.y) return false;
@@ -26,7 +26,7 @@ namespace Game.Core
             for (var x = min; x < max; x++)
             {
                 var idx = field.At(x, posA.y);
-                if (idx == a.Index || idx == b.Index) continue;
+                if (idx == idxA || idx == idxB) continue;
                 var cell = cells[idx];
                 if (!cell.IsRemoved) //cell.HasValue && 
                     return false;

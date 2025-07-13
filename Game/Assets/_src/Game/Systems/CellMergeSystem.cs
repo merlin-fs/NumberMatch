@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Components;
@@ -10,11 +11,13 @@ namespace Game.Core.Systems
     {
         private Entity _fieldEntity;
         private readonly List<IMergeRule> _rules = new();
+        private readonly Action _onUpdate; // Додатковий колбек для оновлення UI або інших систем
 
-        public CellMergeSystem(Entity fieldEntity, IEnumerable<IMergeRule> rules)
+        public CellMergeSystem(Entity fieldEntity, IEnumerable<IMergeRule> rules, Action onUpdate)
         {
             _fieldEntity = fieldEntity;
             _rules.AddRange(rules);
+            _onUpdate = onUpdate;
         }
 
         public void OnCreate(EntityManager manager, SystemQuery query)
@@ -38,17 +41,16 @@ namespace Game.Core.Systems
                 // Тепер просто використовуємо request.IndexA / IndexB як індекси у буфері:
                 if (CanMerge(field, cells.AsArray(), request.IndexA, request.IndexB))
                 {
-                    var a = cells[request.IndexA];
-                    var b = cells[request.IndexB];
+                    ref var a = ref cells.ElementAt(request.IndexA);
+                    ref var b = ref cells.ElementAt(request.IndexB);
                     a.IsRemoved = true;
                     b.IsRemoved = true;
-                    cells[request.IndexA] = a;
-                    cells[request.IndexB] = b;
                     // додаткова логіка (очки, анімація тощо)
                 }
                 
                 manager.RemoveEntity(reqEntity); // Запит виконано
             }
+            _onUpdate?.Invoke();
         }
 
         private bool CanMerge(FieldComponent field, NativeArray<CellComponent> cells, int idxA, int idxB)

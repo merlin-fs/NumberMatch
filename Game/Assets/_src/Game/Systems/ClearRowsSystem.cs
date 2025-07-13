@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Components;
@@ -12,10 +13,12 @@ namespace Game.Core.Systems
     public class ClearRowsSystem : ISystem
     {
         private readonly Entity _fieldEntity;
+        private readonly Action _onUpdate; // Додатковий колбек для оновлення UI або інших систем
 
-        public ClearRowsSystem(Entity fieldEntity)
+        public ClearRowsSystem(Entity fieldEntity, Action onUpdate)
         {
             _fieldEntity = fieldEntity;
+            _onUpdate = onUpdate;
         }
 
         public void OnCreate(EntityManager manager, SystemQuery query)
@@ -61,26 +64,20 @@ namespace Game.Core.Systems
             foreach (int row in rowsToRemove.OrderByDescending(r => r))
             {
                 // Видаляємо клітинки цього рядка
-                int startIdx = row * width;
-                for (int i = 0; i < width; i++)
-                    cells.RemoveAt(startIdx); // Важливо: завжди видаляти з однакового startIdx
+                var startIdx = row * width;
+                cells.RemoveRange(startIdx, width);
 
                 // Зсуваємо всі клітинки вище (оновлюємо Index)
-                for (int i = 0; i < cells.Length; i++)
+                for (var i = 0; i < cells.Length; i++)
                 {
-                    var cell = cells[i];
-                    var pos = field.FromIndex(cell.Index);
-                    if (pos.y >= row) continue;
-                    // Зсуваємо клітинку вниз
-                    pos.y += 1;
-                    cell.Index = field.At(pos.x, pos.y);
-                    cells[i] = cell;
+                    cells.ElementAt(i).Index = i;
                 }
             }
 
             // Оновлюємо розмір поля
             field.Size = new int2(width, height - rowsToRemove.Count);
             manager.UpdateComponent(_fieldEntity, field);
+            _onUpdate?.Invoke();
         }
 
         [BurstCompile]

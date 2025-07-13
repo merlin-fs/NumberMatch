@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Configs;
@@ -12,11 +13,13 @@ namespace Game.Core.Systems
     {
         private readonly FieldGenerationConfig _config;
         private readonly Entity _fieldEntity; // Сутність поля
+        private readonly Action _onUpdate; // Додатковий колбек для оновлення UI або інших систем
         
-        public FieldGenerationSystem(FieldGenerationConfig config, Entity fieldEntity)
+        public FieldGenerationSystem(FieldGenerationConfig config, Entity fieldEntity, Action onUpdate)
         {
             _config = config;
             _fieldEntity = fieldEntity;
+            _onUpdate = onUpdate;
         }
         
         public void OnCreate(EntityManager manager, SystemQuery query)
@@ -44,6 +47,7 @@ namespace Game.Core.Systems
                 manager.UpdateComponent(_fieldEntity, field);
                 manager.RemoveEntity(entity);
             }
+            _onUpdate?.Invoke();
         }
         
         private void AddNumbers(NativeList<DeckComponent> desk, NativeList<CellComponent> cells, int numbersCount, int startIndex)

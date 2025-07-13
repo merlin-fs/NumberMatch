@@ -24,7 +24,7 @@ namespace Game.Core
             var maxY = math.max(posA.y, posB.y);
             for (var y = minY; y < maxY; y++)
             {
-                var idx = field.At(posA.x, y);
+                int idx = field.At(posA.x, y);
                 if (idx == a.Index || idx == b.Index) continue;
                 if (!cells[idx].IsRemoved) return false;
             }
