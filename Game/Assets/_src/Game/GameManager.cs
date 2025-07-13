@@ -1,4 +1,5 @@
 using Game.Configs;
+using Game.UI;
 using TFs.Common.Contexts;
 using TFs.Common.Entities;
 
@@ -7,17 +8,22 @@ namespace Game.Core
     public class GameManager
     {
         public World World => _world;
+        public Entity Field => _field;
         
         private World _world;
         private Entity _field;
         
+        private GameFieldUiDebugView _gameFieldUiDebugView;
+        
         public GameManager(Context context) 
         {
+            _gameFieldUiDebugView = context.Resolve<GameFieldUiDebugView>();
+            
             _world = new World("GameWorld");
             var config = new FieldGenerationConfig
             {
                 PairCountPerType = 3, // Кількість пар для кожного типу
-                Seed = 43,
+                Seed = 0,
             };
             _field = _world.EntityManager.CreateEntity(typeof(Components.FieldComponent), typeof(Components.CellComponent), typeof(Components.DeckComponent));
             _world.EntityManager.UpdateComponent(_field, new Components.FieldComponent

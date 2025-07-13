@@ -90,7 +90,7 @@ namespace Game.Core.Systems
             }
 
             // Shuffle
-            var rng = new System.Random(seed);
+            var rng = seed != 0 ? new System.Random(seed) : new System.Random();
             return new NativeArray<int>(deck.OrderBy(x => rng.Next()).ToArray(), Allocator.Temp);
         }        
     }
