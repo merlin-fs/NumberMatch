@@ -1,22 +1,38 @@
-using Game.Core.Data;
+using Game.Core.Components;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Game.Core
 {
-    /*
     public class RowMergeRule : IMergeRule
     {
-        public bool CanMerge(FieldData field, int y1, int x1, int y2, int x2)
+        public bool CanMerge(FieldComponent field, NativeArray<CellComponent> cells, int idxA, int idxB)
         {
-            if (y1 != y2 || x1 == x2) return false;
-            var min = math.min(x1, x2) + 1;
-            var max = math.max(x1, x2);
-            
+            var a = cells[idxA];
+            var b = cells[idxB];
+            if (a.IsRemoved || b.IsRemoved) return false;
+            if (!(a.Value == b.Value || a.Value + b.Value == 10)) return false;
+
+            var posA = field.FromIndex(a.Index);
+            var posB = field.FromIndex(b.Index);
+
+            // Перевіряємо, чи в одному рядку
+            if (posA.y != posB.y) return false;
+
+            // Перевіряємо "видимість" (між ними не має бути інших активних)
+            var min = math.min(posA.x, posB.x) + 1;
+            var max = math.max(posA.x, posB.x);
+
             for (var x = min; x < max; x++)
-                if (!field[y1, x].IsEmpty) return false;
-            
+            {
+                var idx = field.At(x, posA.y);
+                if (idx == a.Index || idx == b.Index) continue;
+                var cell = cells[idx];
+                if (!cell.IsRemoved) //cell.HasValue && 
+                    return false;
+            }
+
             return true;
-        }    
+        }
     }
-    */
 }

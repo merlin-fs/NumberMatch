@@ -1,27 +1,45 @@
-using Game.Core.Data;
+using Game.Core.Components;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace Game.Core
 {
-    /*
     public class DiagonalMergeRule : IMergeRule
     {
-        public bool CanMerge(FieldData field, int y1, int x1, int y2, int x2)
+        public bool CanMerge(FieldComponent field, NativeArray<CellComponent> cells, int idxA, int idxB)
         {
-            if (math.abs(y1 - y2) != math.abs(x1 - x2) || (y1 == y2 && x1 == x2)) return false;
-            
-            var stepY = y1 < y2 ? 1 : -1;
-            var stepX = x1 < x2 ? 1 : -1;
-            int y = y1 + stepY, x = x1 + stepX;
-            
-            while (y != y2 && x != x2)
+            var a = cells[idxA];
+            var b = cells[idxB];
+            if (a.IsRemoved || b.IsRemoved) return false;
+            if (!(a.Value == b.Value || a.Value + b.Value == 10)) return false;
+
+            var posA = field.FromIndex(a.Index);
+            var posB = field.FromIndex(b.Index);
+
+            // Тільки на діагоналі (|dx| == |dy|)
+            int dx = posA.x - posB.x;
+            int dy = posA.y - posB.y;
+            if (math.abs(dx) != math.abs(dy)) return false;
+
+            int stepX = dx > 0 ? -1 : 1;
+            int stepY = dy > 0 ? -1 : 1;
+            int steps = math.abs(dx);
+
+            int x = posA.x + stepX;
+            int y = posA.y + stepY;
+            for (var i = 1; i < steps; i++)
             {
-                if (!field[y, x].IsEmpty) return false;
-                y += stepY;
+                var idx = field.At(x, y);
+                if (idx == a.Index || idx == b.Index)
+                {
+                    x += stepX; y += stepY; 
+                    continue;
+                }
+                if (!cells[idx].IsRemoved) return false;
                 x += stepX;
+                y += stepY;
             }
             return true;
         }
     }
-    */
 }

@@ -1,9 +1,10 @@
-using Game.Core.Data;
+using Game.Core.Components;
+using Unity.Collections;
 
 namespace Game.Core
 {
     public interface IMergeRule
     {
-        //bool CanMerge(FieldData field, int y1, int x1, int y2, int x2);
+        bool CanMerge(FieldComponent field, NativeArray<CellComponent> cells, int idxA, int idxB);
     }
 }

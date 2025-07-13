@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Game.Core;
@@ -15,24 +16,26 @@ namespace Game.UI
         [SerializeField] private GameObject cellPrefab; // Prefab з TMP_Text/Text (наприклад, просто TextMeshProUGUI)
         
         private GameManager _gameManager;
-        private World _world;
-
+        
         private readonly Dictionary<int, CellView> _cellTexts = new();
         private int2 _size;
+        private int idx1 = -1;
+        private int idx2 = -1;
+        private Action _onDeselect;
+        public Action OnUpdate;
 
         public Task Initialize(Context context)
         {
             _gameManager = context.Resolve<GameManager>();
-            _world = context.Resolve<World>();
-            
-            this.Invoke(nameof(RenderField), 2f); // Викликати через 2 секунди після ініціалізації
             return Task.CompletedTask;
         }
         
         // Виклич вручну або через систему, наприклад після змін у полі
-        public void RenderField()
+        public void RenderField(EntityManager manager)
         {
-            EntityManager manager = _world.EntityManager;
+            _onDeselect?.Invoke();
+            _onDeselect = null;
+            
             var field = manager.GetComponent<FieldComponent>(_gameManager.Field);
             var cells = manager.GetBuffer<CellComponent>(_gameManager.Field);
             var total = field.Size.x * field.Size.y;
@@ -68,7 +71,37 @@ namespace Game.UI
                 
                 cellView.GetComponent<RectTransform>()
                     .anchoredPosition = math.float2(root.anchoredPosition.x, root.anchoredPosition.y) + pos + offset;
-                cellView.SetValue(i < cells.Length ? cells[i] : new CellComponent{IsRemoved = true, Value = 0});
+                var cell = i < cells.Length ? cells[i] : new CellComponent { IsRemoved = true, Value = 0 };
+                
+                cellView.SetValue(cell, () =>
+                {
+                    if (idx1 == -1)
+                    {
+                        if (cell.IsRemoved) return;
+                        idx1 = cell.Index;
+                        cellView.SetSelected(true);
+                    }
+                    else if (idx2 == -1 && idx1 != cell.Index)
+                    {
+                        if (cell.IsRemoved) return;
+                        idx2 = cell.Index;
+                        cellView.SetSelected(true);
+                        var request = manager.CreateEntity<MergeRequestComponent>();
+                        manager.UpdateComponent(request, new MergeRequestComponent
+                        {
+                            IndexA = idx1,
+                            IndexB = idx2
+                        });
+                        _onDeselect = () =>
+                        {
+                            _cellTexts[idx1].SetSelected(false);
+                            _cellTexts[idx2].SetSelected(false);
+                            idx1 = -1;
+                            idx2 = -1;
+                        };
+                        OnUpdate?.Invoke();
+                    }
+                });
             }
         }
     }

@@ -1,28 +1,38 @@
-using Game.Core.Data;
+using Game.Core.Components;
+using Unity.Collections;
 
 namespace Game.Core
 {
-    /*
     public class WrapRowMergeRule : IMergeRule
     {
-        public bool CanMerge(FieldData field, int y1, int x1, int y2, int x2)
+        public bool CanMerge(FieldComponent field, NativeArray<CellComponent> cells, int idxA, int idxB)
         {
-            if (y1 + 1 != y2) return false;             // Тільки з наступним рядком
-            if (x1 != field.Size.x - 1) return false;   // Тільки остання клітинка рядка
-            if (x2 != 0) return false;                  // Тільки перша клітинка наступного рядка
+            var a = cells[idxA];
+            var b = cells[idxB];
+            if (a.IsRemoved || b.IsRemoved) return false;
+            if (!(a.Value == b.Value || a.Value + b.Value == 10)) return false;
 
-            // Перевіряємо, що між ними немає чисел:
-            // Від x1+1 до кінця рядка (має бути порожньо)
-            for (var x = x1 + 1; x < field.Size.x; x++)
-                if (!field[y1, x].IsEmpty) return false;
+            var posA = field.FromIndex(a.Index);
+            var posB = field.FromIndex(b.Index);
 
-            // Від 0 до x2-1 у наступному рядку (має бути порожньо, але x2==0, так що цикл не зайде)
-            // Залишаємо для універсальності (наприклад, якщо правило розшириться)
-            // for (int x = 0; x < x2; x++)
-            //    if (!field[y2, x].IsEmpty) return false;
+            // Перевіряємо wrap: a має бути в кінці рядка, b — на початку наступного
+            if (posA.y + 1 != posB.y) return false;
+            if (posA.x != field.Size.x - 1) return false;
+            if (posB.x != 0) return false;
+
+            // Перевіряємо, що всі клітинки після a до кінця рядка порожні
+            for (int x = posA.x + 1; x < field.Size.x; x++)
+            {
+                int idx = field.At(x, posA.y);
+                if (!cells[idx].IsRemoved) return false;
+            }
+
+            // Перевіряємо, що всі клітинки до b в наступному рядку порожні (але b.x == 0, тож цей цикл порожній)
+            // Якщо колись дозволиш merge не тільки з перших клітинок наступного рядка, залиш цикл:
+            // for (int x = 0; x < posB.x; x++)
+            //    if (!cells[field.At(x, posB.y)].IsRemoved) return false;
 
             return true;
         }
     }
-    */
 }

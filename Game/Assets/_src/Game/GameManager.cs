@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Game.Configs;
 using Game.UI;
 using TFs.Common.Contexts;
@@ -22,7 +23,8 @@ namespace Game.Core
             _world = new World("GameWorld");
             var config = new FieldGenerationConfig
             {
-                PairCountPerType = 3, // Кількість пар для кожного типу
+                Sum10PairsPerType = 18, // Кількість пар для кожного типу, які в сумі дають 10
+                EqualPairsPerType = 2, // Кількість пар для кожного типу, які рівні між собою
                 Seed = 0,
             };
             _field = _world.EntityManager.CreateEntity(typeof(Components.FieldComponent), typeof(Components.CellComponent), typeof(Components.DeckComponent));
@@ -30,9 +32,15 @@ namespace Game.Core
             {
                 Size = new Unity.Mathematics.int2(9, 0), // Розмір поля
             });
-            _world.SystemManager.AddSystem(new Systems.FieldGenerationSystem(config, _field), _world.EntityManager);
+
+            var rules = new List<IMergeRule>();
+            rules.Add(new ColumnMergeRule());
+            rules.Add(new RowMergeRule());
+            rules.Add(new DiagonalMergeRule());
+            rules.Add(new WrapRowMergeRule());
             
-            StartNewGame();
+            _world.SystemManager.AddSystem(new Systems.FieldGenerationSystem(config, _field), _world.EntityManager);
+            _world.SystemManager.AddSystem(new Systems.CellMergeSystem(_field, rules), _world.EntityManager);
         }
         
         public void StartNewGame()
@@ -45,6 +53,17 @@ namespace Game.Core
             {
                 NumbersCount = 35,
                 Index = 0,
+            });
+        }
+
+        public void AddPack()
+        {
+            var cells = _world.EntityManager.GetBuffer<Components.CellComponent>(_field);
+            var request = _world.EntityManager.CreateEntity<Components.AddNumbersRequestComponent>();
+            _world.EntityManager.UpdateComponent(request, new Components.AddNumbersRequestComponent
+            {
+                NumbersCount = cells.Length,
+                Index = cells.Length,
             });
         }
     }
